@@ -2,21 +2,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 import os
+from . import inputValidation as iv
 
 class Airfoil(object):
     def __init__(self, aoa=0, contour=[], normal_vector=[0,0,1], name='', rotation_angle=0):
         # check the type of the input
-        if type(contour) is not list or type(contour) is not np.ndarray:
+        if not iv.check_if_vector(contour, 2):
             raise TypeError('The contour has to be a tuple of real numbers')
-        if type(aoa) is not float or type(aoa) is not np.float:
+        if not iv.check_if_number(aoa):
             raise TypeError('The angle of attack has to be a real number')
-        if type(normal_vector) is not list or type(normal_vector) is not np.ndarray or type(normal_vector) is not tuple:
+        if not iv.check_if_vector(normal_vector, 1):
             raise TypeError('The normal vector is a tuple/list of three real numbers')
             if len(normal_vector) != 3:
-                raise TypeError('The normal vector has to be of dimension 3')
+                raise TypeError('The normal vector has to be of length 3')
         if type(name) is not str:
             raise TypeError('The name of the Airfoil has to be a string')
-        if type(rotation_angle) is not float:
+        if not iv.check_if_number(rotation_angle):
             return TypeError('The rotation Angle has to be a real number')
 
         # assign the input to the variables
@@ -39,16 +40,14 @@ class Airfoil(object):
             raise ImportError('The File given cannot be interpreted correctly')
 
     def set_normal(self, normal_vector):
-        types = [np.ndarray, tuple, list]
-        for t in types:
-            if type(normal_vector) is not t:
-                raise TypeError('The normal vector has to be either a list, tuple, or numpy array')
+        if not iv.check_if_vector(normal_vector):
+            raise TypeError('The normal vector has to be either a list, tuple, or numpy array')
         if len(normal_vector) is not 3:
-            raise TypeError('The normal vector has to be three dimensional')
+            raise TypeError('The normal vector has to be a vector from a threedimensional vectorspace')
         self.normal_vector = normal_vector
 
     def set_rotation_angle(self, theta, unit='deg'):
-        if type(theta) is not float:
+        if not iv.check_if_number(theta):
             raise TypeError('The rotation angle has to be a real number')
         if unit == 'deg':
             theta = theta * np.pi/180
@@ -83,5 +82,4 @@ class Airfoil(object):
             y_rotation = np.array([[np.cos(theta), 0, np.sin(theta)], [0, 1, 0], [-np.sin(theta), 0, np.cos(theta)]])
             rotation_matrix = np.matmul(y_rotation, rotation_matrix)
         return [np.matmul(rotation_matrix, np.array([point[0], point[1], 0])) for point in self.contour]
-
 
