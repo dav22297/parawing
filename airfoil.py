@@ -5,7 +5,7 @@ import os
 from . import inputValidation as iv
 
 class Airfoil(object):
-    def __init__(self, aoa=0, contour=[], normal_vector=[0,0,1], name='', rotation_angle=0):
+    def __init__(self, aoa=0, contour=(), normal_vector=(0,0,1), name='', rotation_angle=0):
         # check the type of the input
         if not iv.check_if_vector(contour, 2):
             raise TypeError('The contour has to be a tuple of real numbers')
@@ -29,31 +29,34 @@ class Airfoil(object):
         self.rotated_to = rotation_angle
 
     def import_xfoil_airfoil(self, filepath):
-        if not os.path.exists(filepath):
+        if os.path.exists(filepath):
+            try:
+                self.contour = np.loadtxt(filepath, dtype=(float, float), comments='#', skiprows=1)
+                with open(filepath, r) as f:
+                    self.name = f.readline()
+            except BaseException:
+                raise ImportError('The File given cannot be interpreted correctly')
+        else:
             raise ImportError('The filepath does not lead to a valid File')
 
-        try:
-            self.contour = np.loadtxt(filepath, dtype=(float, float), comments='#', skiprows=1)
-            with open(filepath, r) as f:
-                self.name = f.readline()
-        except BaseException:
-            raise ImportError('The File given cannot be interpreted correctly')
 
     def set_normal(self, normal_vector):
-        if not iv.check_if_vector(normal_vector):
-            raise TypeError('The normal vector has to be either a list, tuple, or numpy array')
-        if len(normal_vector) is not 3:
-            raise TypeError('The normal vector has to be a vector from a threedimensional vectorspace')
-        self.normal_vector = normal_vector
+        if iv.check_if_vector(normal_vector, 3):
+            self.normal_vector = normal_vector
+        else:
+            raise TypeError('The normal vector has to be either a list, tuple, or numpy array of len 3')
+
 
     def set_rotation_angle(self, theta, unit='deg'):
-        if not iv.check_if_number(theta):
+        if iv.check_if_number(theta):
+            if unit == 'deg':
+                theta = np.radians(theta)
+            elif unit != 'rad':
+                raise ValueError('The unit of the rotation angle has to be either in "rad" or "deg"')
+            self.rotation_angle = theta
+        else:
             raise TypeError('The rotation angle has to be a real number')
-        if unit == 'deg':
-            theta = theta * np.pi/180
-        elif unit != 'rad':
-            raise ValueError('The unit of the rotation angle has to be either in "rad" or "deg"')
-        self.rotation_angle = theta
+
 
     def rotate(self, theta):
         if type(theta) is not float:
